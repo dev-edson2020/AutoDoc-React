@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Document } from "@/api/entities";
-import { User } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +30,6 @@ export default function History() {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
-  const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -60,30 +57,28 @@ export default function History() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const currentUser = await User.me();
-      setUser(currentUser);
+      const response = await fetch("http://localhost:8080/documento/historico");
+      if (!response.ok) {
+        throw new Error("Erro ao buscar documentos");
+      }
+      const data = await response.json();
 
-      const docs = await Document.filter({ created_by: currentUser.email }, "-created_date");
-      setDocuments(docs);
+      const documentosTratados = data.map((doc, index) => ({
+        id: doc.id || index,
+        title: doc.title || "Documento",
+        type: doc.documentType || "desconhecido",
+        pdf_url: doc.pdfPath || "",
+        status: doc.status || "generated",
+        created_date: doc.createdDate || new Date().toISOString()
+      }));
+
+      setDocuments(documentosTratados);
     } catch (error) {
-      console.error("Error loading documents:", error);
+      console.error("Erro ao carregar documentos:", error);
       setError("Erro ao carregar documentos.");
       setTimeout(() => setError(""), 3000);
     }
     setIsLoading(false);
-  };
-
-  const updateDocumentStatus = async (docId, newStatus) => {
-    try {
-      await Document.update(docId, { status: newStatus });
-      await loadData();
-      setSuccess(`Status atualizado para "${getStatusLabel(newStatus)}" com sucesso!`);
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (error) {
-      console.error("Error updating document status:", error);
-      setError("Erro ao atualizar status do documento.");
-      setTimeout(() => setError(""), 3000);
-    }
   };
 
   const filterDocuments = () => {
@@ -93,8 +88,7 @@ export default function History() {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(doc =>
         doc.title.toLowerCase().includes(searchLower) ||
-        documentTypes[doc.type]?.title.toLowerCase().includes(searchLower) ||
-        (doc.form_data && JSON.stringify(doc.form_data).toLowerCase().includes(searchLower))
+        documentTypes[doc.type]?.title.toLowerCase().includes(searchLower)
       );
     }
 
@@ -250,7 +244,7 @@ export default function History() {
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center space-x-4">
-                        <div className={`w-14 h-14 bg-gradient-to-r ${docType?.color || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
+                        <div className={`w-14 h-14 bg-gradient-to-r ${docType?.color || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center text-xl`}>
                           {docType?.icon || '📄'}
                         </div>
 
@@ -291,37 +285,6 @@ export default function History() {
                             <Download className="w-4 h-4 mr-2" />
                             Baixar
                           </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-9 w-9">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => updateDocumentStatus(doc.id, "signed")}
-                                disabled={doc.status === "signed"}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                                Marcar como Assinado
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => updateDocumentStatus(doc.id, "archived")}
-                                disabled={doc.status === "archived"}
-                              >
-                                <Archive className="w-4 h-4 mr-2 text-gray-500" />
-                                Marcar como Arquivado
-                              </DropdownMenuItem>
-                               <DropdownMenuItem
-                                onClick={() => updateDocumentStatus(doc.id, "canceled")}
-                                disabled={doc.status === "canceled"}
-                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                              >
-                                <XCircle className="w-4 h-4 mr-2" />
-                                Marcar como Cancelado
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
