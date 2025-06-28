@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Document } from "@/api/entities";
+import { User } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +32,7 @@ export default function History() {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -63,9 +66,10 @@ export default function History() {
       }
       const data = await response.json();
 
+      // Mapeia os campos do backend para o que o front espera
       const documentosTratados = data.map((doc, index) => ({
         id: doc.id || index,
-        title: doc.title || "Documento",
+        title: documentTypes[doc.documentType]?.title || "Documento", // Corrigido aqui
         type: doc.documentType || "desconhecido",
         pdf_url: doc.pdfPath || "",
         status: doc.status || "generated",
@@ -81,6 +85,19 @@ export default function History() {
     setIsLoading(false);
   };
 
+  const updateDocumentStatus = async (docId, newStatus) => {
+    try {
+      await Document.update(docId, { status: newStatus });
+      await loadData();
+      setSuccess(`Status atualizado para "${getStatusLabel(newStatus)}" com sucesso!`);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      console.error("Error updating document status:", error);
+      setError("Erro ao atualizar status do documento.");
+      setTimeout(() => setError(""), 3000);
+    }
+  };
+
   const filterDocuments = () => {
     let filtered = documents;
 
@@ -88,7 +105,8 @@ export default function History() {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(doc =>
         doc.title.toLowerCase().includes(searchLower) ||
-        documentTypes[doc.type]?.title.toLowerCase().includes(searchLower)
+        documentTypes[doc.type]?.title.toLowerCase().includes(searchLower) ||
+        (doc.form_data && JSON.stringify(doc.form_data).toLowerCase().includes(searchLower))
       );
     }
 
@@ -221,6 +239,13 @@ export default function History() {
           </Alert>
         )}
 
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <XCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4">
           {filteredDocuments.length === 0 ? (
             <Card className="border-0 shadow-xl">
@@ -244,7 +269,7 @@ export default function History() {
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center space-x-4">
-                        <div className={`w-14 h-14 bg-gradient-to-r ${docType?.color || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center text-xl`}>
+                        <div className={`w-14 h-14 bg-gradient-to-r ${docType?.color || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
                           {docType?.icon || '📄'}
                         </div>
 
@@ -285,6 +310,37 @@ export default function History() {
                             <Download className="w-4 h-4 mr-2" />
                             Baixar
                           </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="icon" className="h-9 w-9">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => updateDocumentStatus(doc.id, "signed")}
+                                disabled={doc.status === "signed"}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                Marcar como Assinado
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => updateDocumentStatus(doc.id, "archived")}
+                                disabled={doc.status === "archived"}
+                              >
+                                <Archive className="w-4 h-4 mr-2 text-gray-500" />
+                                Marcar como Arquivado
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => updateDocumentStatus(doc.id, "canceled")}
+                                disabled={doc.status === "canceled"}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Marcar como Cancelado
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
