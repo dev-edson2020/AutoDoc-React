@@ -85,18 +85,29 @@ export default function History() {
     setIsLoading(false);
   };
 
-  const updateDocumentStatus = async (docId, newStatus) => {
-    try {
-      await Document.update(docId, { status: newStatus });
-      await loadData();
-      setSuccess(`Status atualizado para "${getStatusLabel(newStatus)}" com sucesso!`);
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (error) {
-      console.error("Error updating document status:", error);
-      setError("Erro ao atualizar status do documento.");
-      setTimeout(() => setError(""), 3000);
-    }
-  };
+ const updateDocumentStatus = async (docId, newStatus) => {
+  try {
+    const response = await fetch(`http://localhost:8080/documento/${docId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    if (!response.ok) throw new Error('Erro ao atualizar status');
+    
+    await loadData();
+    setSuccess(`Status atualizado para "${getStatusLabel(newStatus)}" com sucesso!`);
+  } catch (error) {
+    setError(error.message);
+  } finally {
+    setTimeout(() => {
+      setSuccess('');
+      setError('');
+    }, 3000);
+  }
+};
 
   const filterDocuments = () => {
     let filtered = documents;
