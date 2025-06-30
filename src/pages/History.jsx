@@ -37,13 +37,13 @@ export default function History() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const documentTypes = {
-    declaracao_residencia: { title: "Declaração de Residência", icon: "🏠", color: "from-blue-500 to-blue-600" },
-    contrato_prestacao: { title: "Contrato de Prestação", icon: "📄", color: "from-purple-500 to-purple-600" },
-    recibo_pagamento: { title: "Recibo de Pagamento", icon: "💰", color: "from-green-500 to-green-600" },
-    uniao_estavel: { title: "União Estável", icon: "💑", color: "from-pink-500 to-pink-600" },
-    pedido_demissao: { title: "Pedido de Demissão", icon: "📋", color: "from-orange-500 to-orange-600" },
-    procuracao_simples: { title: "Procuração Simples", icon: "⚖️", color: "from-indigo-500 to-indigo-600" },
+ const documentTypes = {
+    declaracao_residencia: { title: "Declaração de Residência", icon: "🏠", color: "bg-blue-500" },
+    contrato_prestacao: { title: "Contrato de Prestação", icon: "📄", color: "bg-purple-500" },
+    recibo_pagamento: { title: "Recibo de Pagamento", icon: "💰", color: "bg-green-500" },
+    uniao_estavel: { title: "União Estável", icon: "💑", color: "bg-pink-500" },
+    pedido_demissao: { title: "Pedido de Demissão", icon: "📋", color: "bg-orange-500" },
+    procuracao_simples: { title: "Procuração Simples", icon: "⚖️", color: "bg-indigo-500" },
   };
 
   useEffect(() => {
@@ -58,9 +58,7 @@ export default function History() {
     setIsLoading(true);
     try {
       const response = await fetch("http://localhost:8080/documento/listar");
-      if (!response.ok) {
-        throw new Error("Erro ao buscar documentos");
-      }
+      if (!response.ok) throw new Error("Erro ao buscar documentos");
       const data = await response.json();
       const documentosTratados = data.map((doc) => ({
         id: doc.id,
@@ -72,7 +70,6 @@ export default function History() {
       }));
       setDocuments(documentosTratados);
     } catch (error) {
-      console.error("Erro ao carregar documentos:", error);
       setError("Erro ao carregar documentos.");
       setTimeout(() => setError(""), 3000);
     }
@@ -88,7 +85,7 @@ export default function History() {
       });
       if (!response.ok) throw new Error("Erro ao atualizar status");
       await loadData();
-      setSuccess(`Status atualizado para \"${getStatusLabel(newStatus)}\" com sucesso!`);
+      setSuccess(`Status atualizado para "${getStatusLabel(newStatus)}" com sucesso!`);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -120,10 +117,10 @@ export default function History() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "signed": return "bg-green-100 text-green-800 border-green-200";
-      case "archived": return "bg-gray-100 text-gray-800 border-gray-200";
-      case "canceled": return "bg-red-100 text-red-800 border-red-200";
-      default: return "bg-blue-100 text-blue-800 border-blue-200";
+      case "signed": return "bg-green-50 text-green-700 border border-green-200";
+      case "archived": return "bg-gray-50 text-gray-700 border border-gray-200";
+      case "canceled": return "bg-red-50 text-red-700 border border-red-200";
+      default: return "bg-blue-50 text-blue-700 border border-blue-200";
     }
   };
 
@@ -210,9 +207,9 @@ export default function History() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(doc.status)}>{getStatusLabel(doc.status)}</Badge>
-                    <Button variant="outline" size="sm" onClick={() => viewDocument(doc)}><ExternalLink className="w-4 h-4 mr-1" />Ver</Button>
-                    <Button variant="outline" size="sm" onClick={() => downloadDocument(doc)}><Download className="w-4 h-4 mr-1" />Baixar</Button>
+                    <span className={`px-3 py-1 text-sm rounded-full font-medium ${getStatusColor(doc.status)}`}>{getStatusLabel(doc.status)}</span>
+                    <Button variant="ghost" size="sm" onClick={() => viewDocument(doc)} className="text-blue-600 hover:underline"><ExternalLink className="w-4 h-4 mr-1" />Ver</Button>
+                    <Button variant="ghost" size="sm" onClick={() => downloadDocument(doc)} className="text-gray-700 hover:underline"><Download className="w-4 h-4 mr-1" />Baixar</Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon"><MoreHorizontal className="w-4 h-4" /></Button>
