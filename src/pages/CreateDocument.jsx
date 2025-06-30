@@ -46,7 +46,7 @@ export default function CreateDocument() {
       color: "from-green-500 to-green-600",
       fields: [
         { name: "nome", label: "Nome do Pagador", type: "text", required: true },
-        { name: "cpf", label: "CPF do Pagador", type: "text", required: true },
+        { name: "cpf", label: "CPF", type: "text", required: true },
         { name: "servico", label: "Descrição do Pagamento", type: "textarea", required: true },
         { name: "valor", label: "Valor (R$)", type: "text", required: true }
       ]
@@ -108,9 +108,13 @@ export default function CreateDocument() {
     setSuccess("");
 
     try {
+      const config = documentConfigs[documentType];
+
       const payload = {
-        ...formData,
-        documentType
+        type: documentType,
+        title: config.title,
+        form_data: formData,
+        creator_name: "Edson" // Substituir no futuro pelo nome do usuário logado
       };
 
       const response = await fetch("http://localhost:8080/documento/gerar", {
