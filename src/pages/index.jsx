@@ -8,7 +8,8 @@ import Upgrade from "./Upgrade";
 import ViewDocument from "./ViewDocument";
 import AdminPanel from "./AdminPanel";
 import Login from "./Login";
-import Register from "./Register"; // Importe o componente Register
+import Register from "./Register"; 
+import ForgotPassword from "./ForgotPassword"; 
 
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 
@@ -55,6 +56,7 @@ function PagesContent() {
       <Route path="/Home" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} /> {/* Adicione esta linha */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Rotas protegidas */}
       {isAuthenticated() && (
