@@ -102,20 +102,23 @@ export default function Dashboard() {
     try {
       const currentUser = await User.me();
       setUser(currentUser);
-      
-      const allDocs = await Document.filter({ created_by: currentUser.email }, "-created_date");
-      
-      const recentDocs = allDocs.slice(0, 5);
-      setRecentDocuments(recentDocs);
-      
-      const thisMonth = new Date().getMonth();
-      const thisYear = new Date().getFullYear();
-      const thisMonthDocs = allDocs.filter(doc => {
-        const docDate = new Date(doc.created_date);
-        return docDate.getMonth() === thisMonth && docDate.getFullYear() === thisYear;
+
+      const response = await fetch(`http://localhost:8080/documento/dashboard/${currentUser.email}`, {
+        method: 'GET',
+        credentials: 'include',  // <== Aqui está a correção importante para enviar cookies
+        headers: {
+          'Accept': 'application/json',
+        },
       });
-      setDocumentsThisMonth(thisMonthDocs.length);
-      
+      if (!response.ok) {
+        throw new Error("Falha ao carregar dados do painel");
+      }
+      const data = await response.json();
+
+      setRecentDocuments(data.recentDocuments || []);
+      setDocumentsThisMonth(data.documentsThisMonth || 0);
+      setUser((prev) => ({ ...prev, plan: data.plan || "gratuito" }));
+
     } catch (error) {
       console.error("Error loading data:", error);
       setError("Erro ao carregar dados do painel.");
@@ -125,7 +128,15 @@ export default function Dashboard() {
 
   const updateDocumentStatus = async (docId, newStatus) => {
     try {
-      await Document.update(docId, { status: newStatus });
+      const response = await fetch(`http://localhost:8080/documento/${docId}/status`, {
+        method: 'PUT',
+        credentials: 'include', // <== Também aqui para status update
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!response.ok) {
+        throw new Error('Falha ao atualizar status');
+      }
       await loadData();
       setSuccess(`Status atualizado para "${getStatusLabel(newStatus)}" com sucesso!`);
       setTimeout(() => setSuccess(""), 3000);
@@ -443,15 +454,14 @@ export default function Dashboard() {
                                   disabled={doc.status === "archived"}
                                 >
                                   <Archive className="w-4 h-4 mr-2 text-gray-500" />
-                                  Marcar como Arquivado
+                                  Arquivar
                                 </DropdownMenuItem>
-                                 <DropdownMenuItem
+                                <DropdownMenuItem
                                   onClick={() => updateDocumentStatus(doc.id, "canceled")}
                                   disabled={doc.status === "canceled"}
-                                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
                                 >
-                                  <XCircle className="w-4 h-4 mr-2" />
-                                  Marcar como Cancelado
+                                  <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                                  Cancelar
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -464,35 +474,6 @@ export default function Dashboard() {
               })}
             </div>
           </div>
-        )}
-
-        {/* Empty State for New Users */}
-        {recentDocuments.length === 0 && (
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-100">
-            <CardContent className="p-12 text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <FileText className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Comece criando seu primeiro documento
-              </h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Escolha um tipo de documento acima e crie seu primeiro documento profissional em segundos.
-              </p>
-              <div className="flex justify-center space-x-4">
-                <Link to={createPageUrl("CreateDocument?type=recibo_pagamento")}>
-                  <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
-                    💰 Criar Recibo
-                  </Button>
-                </Link>
-                <Link to={createPageUrl("CreateDocument?type=declaracao_residencia")}>
-                  <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
-                    🏠 Declaração
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>
