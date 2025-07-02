@@ -8,6 +8,7 @@ import Upgrade from "./Upgrade";
 import ViewDocument from "./ViewDocument";
 import AdminPanel from "./AdminPanel";
 import Login from "./Login";
+import Register from "./Register"; // Importe o componente Register
 
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 
@@ -53,6 +54,7 @@ function PagesContent() {
       <Route path="/" element={<Home />} />
       <Route path="/Home" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} /> {/* Adicione esta linha */}
 
       {/* Rotas protegidas */}
       {isAuthenticated() && (

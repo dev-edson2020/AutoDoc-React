@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FileText, Loader2 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { FileText, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(localStorage.getItem("rememberMe") === "true" ? localStorage.getItem("savedEmail") || "" : "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(localStorage.getItem("rememberMe") === "true");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +30,16 @@ export default function Login() {
       }
 
       const data = await response.json();
+      
       localStorage.setItem("token", data.token);
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("savedEmail", email);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("savedEmail");
+      }
+      
       navigate("/Dashboard");
     } catch (err) {
       setError(err.message || "Ocorreu um erro ao fazer login");
@@ -40,7 +51,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 sm:p-10 transition-all duration-300 hover:shadow-2xl">
-        {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md mb-4">
             <FileText className="w-8 h-8 text-white" />
@@ -51,7 +61,6 @@ export default function Login() {
           <p className="text-gray-500 mt-2 text-sm">Sistema de Documentação Inteligente</p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-lg text-center font-medium">
             {error}
@@ -79,16 +88,26 @@ export default function Login() {
             <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
               Senha
             </label>
-            <input
-              type="password"
-              id="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="••••••••"
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-10"
+                placeholder="••••••••"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -97,19 +116,22 @@ export default function Login() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={isLoading}
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">
                 Lembrar de mim
               </label>
             </div>
 
-            <a 
-              href="#forgot-password" 
+            <Link 
+              to="/forgot-password" 
               className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
             >
               Esqueceu a senha?
-            </a>
+            </Link>
           </div>
 
           <Button
@@ -130,12 +152,12 @@ export default function Login() {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           Não tem uma conta?{" "}
-          <a 
-            href="#signup" 
+          <Link 
+            to="/register" 
             className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
           >
             Cadastre-se
-          </a>
+          </Link>
         </div>
       </div>
     </div>
