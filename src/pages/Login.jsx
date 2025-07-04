@@ -25,12 +25,12 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Credenciais inválidas");
+        const errorText = await response.text();  
+        throw new Error(errorText || "Credenciais inválidas");
       }
 
       const data = await response.json();
-      
+
       localStorage.setItem("token", data.token);
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
@@ -39,7 +39,7 @@ export default function Login() {
         localStorage.removeItem("rememberMe");
         localStorage.removeItem("savedEmail");
       }
-      
+
       navigate("/Dashboard");
     } catch (err) {
       setError(err.message || "Ocorreu um erro ao fazer login");
@@ -126,8 +126,8 @@ export default function Login() {
               </label>
             </div>
 
-            <Link 
-              to="/forgot-password" 
+            <Link
+              to="/forgot-password"
               className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
             >
               Esqueceu a senha?
@@ -152,8 +152,8 @@ export default function Login() {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           Não tem uma conta?{" "}
-          <Link 
-            to="/register" 
+          <Link
+            to="/register"
             className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
           >
             Cadastre-se
